@@ -2,8 +2,8 @@
 <html lang="en">
 
 <head>
-	<title>HTML Love</title>
 	<meta charset="utf-8" />
+	<title>HTML Crossbreeder</title>
 	<script>
 		function crossbreed(out_element, lhs, rhs) {
 			// const out_element = new Document().documentElement;
@@ -18,33 +18,50 @@
 				smaller_overflow += ratio;
 				const larger_element = larger.children[i];
 				if (smaller_overflow < 1) {
-					out_element.adoptNode(larger_element.cloneNode());
+					out_element.appendChild(larger_element.cloneNode());
 				} else {
 					smaller_overflow -= 1;
 					const smaller_element = smaller.children[Math.floor(i / larger.childElementCount * smaller.childElementCount)]
-					out_element.adoptNode(chooseDominantNode(larger_element, smaller_element));
+					const new_node = chooseDominantNode(larger_element, smaller_element);
+					crossbreed(new_node, larger_element, smaller_element);
+					out_element.appendChild(new_node);
 				}
 			}
 		}
 
 		function chooseDominantNode(lhs, rhs) {
+			// const lhs = document.documentElement;
+			// const rhs = document.documentElement;
 			const type = Math.random() > 0.5 ? lhs.nodeName : rhs.nodeName;
 
 			const new_element = document.createElement(type);
 
+			const lhs_attributes = new Set();
+
 			for (let i = 0; i < lhs.attributes.length; i++) {
 				const attrib = lhs.attributes[i];
-				new_element.attributes.setNamedItem(attrib);
+				lhs_attributes.add(attrib.name);
 			}
 			for (let i = 0; i < rhs.attributes.length; i++) {
 				const attrib = rhs.attributes[i];
-				new_element.attributes.setNamedItem(attrib);
+				if (lhs_attributes.has(attrib.name)) {
+					if (Math.random() > 0.5) {
+						new_element.setAttribute(attrib.name, attrib.value);
+						lhs_attributes.delete(attrib.name)
+					}
+				}
+			}
+			for (let i = 0; i < lhs.attributes.length; i++) {
+				const attrib = lhs.attributes[i];
+				if (lhs_attributes.has(attrib.name)) {
+					new_element.setAttribute(attrib.name, attrib.value);
+				}
 			}
 			return new_element;
 		}
 
 		function getPageAsString(document) {
-			return "<!DOCTYPE html>\n" + document.documentElement.innerHTML;
+			return "<!DOCTYPE html>\n" + document.innerHTML;
 		}
 
 
@@ -70,12 +87,14 @@
 		document.addEventListener("DOMContentLoaded", () => {
 			document.getElementById("crossbreed-make-baby").addEventListener("click", async () => {
 				const other_file = document.getElementById("other-html").files[0];
-				const other_document = document.implementation.createHTMLDocument("Other Partner");
-				other_document.documentElement.innerHTML = await loadFile(other_file);
-				const child_document = new Document();
-				crossbreed(child_document.documentElement, document.documentElement, other_document.documentElement);
-				const string = getPageAsString(child_document.documentElement);
-				download(new File([string], "Your Child.html", { "type": "text/html" }));
+				let parser = new DOMParser();
+				const other_document = parser.parseFromString(await loadFile(other_file), "text/html");
+				parser = null;
+				const child_document = document.implementation.createHTMLDocument("Baby page");
+				crossbreed(child_document.body, document.body, other_document.body);
+				const page_string = getPageAsString(child_document.documentElement);
+				download(new File([page_string], "Your Child.html", { "type": "text/html" }));
+				// console.debug(page_string);
 			});
 			document.getElementById("open-crossbreed").addEventListener("click", () => {
 				document.getElementById("crossbreed-dialog").showModal();
