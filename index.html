@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8" />
 	<title>HTML Crossbreeder</title>
-	<script>
+	<script id="crossbreed-script">
 		function crossbreed(out_element, lhs, rhs) {
 			// const out_element = new Document().documentElement;
 			// const lhs = document.documentElement;
@@ -18,7 +18,7 @@
 				smaller_overflow += ratio;
 				const larger_element = larger.children[i];
 				if (smaller_overflow < 1) {
-					out_element.appendChild(larger_element.cloneNode());
+					out_element.appendChild(larger_element.cloneNode(true));
 				} else {
 					smaller_overflow -= 1;
 					const smaller_element = smaller.children[Math.floor(i / larger.childElementCount * smaller.childElementCount)]
@@ -35,6 +35,7 @@
 			const type = Math.random() > 0.5 ? lhs.nodeName : rhs.nodeName;
 
 			const new_element = document.createElement(type);
+			new_element.innerText = Math.random() > 0.5 ? lhs.innerText : rhs.innerText;
 
 			const lhs_attributes = new Set();
 
@@ -84,6 +85,12 @@
 			return reader.result;
 		}
 
+		function ensureExists(parent, child, element_id) {
+			if (!child.getElementById(element_id)) {
+				child.body.appendChild(parent.getElementById(element_id).cloneNode(true));
+			}
+		}
+
 		document.addEventListener("DOMContentLoaded", () => {
 			document.getElementById("crossbreed-make-baby").addEventListener("click", async () => {
 				const other_file = document.getElementById("other-html").files[0];
@@ -91,7 +98,14 @@
 				const other_document = parser.parseFromString(await loadFile(other_file), "text/html");
 				parser = null;
 				const child_document = document.implementation.createHTMLDocument("Baby page");
+				crossbreed(child_document.head, document.head, other_document.head);
 				crossbreed(child_document.body, document.body, other_document.body);
+				if (!child_document.getElementById("crossbreed-script")) {
+					child_document.head.appendChild(document.getElementById("crossbreed-script").cloneNode(true));
+				}
+				ensureExists(document, child_document, "crossbreed-make-baby");
+				ensureExists(document, child_document, "open-crossbreed");
+				ensureExists(document, child_document, "crossbreed-dialog");
 				const page_string = getPageAsString(child_document.documentElement);
 				download(new File([page_string], "Your Child.html", { "type": "text/html" }));
 				// console.debug(page_string);
@@ -104,17 +118,32 @@
 </head>
 
 <body>
-	<button id="open-crossbreed">Crossbreed this webpage</button>
-	<dialog id="crossbreed-dialog">
-		<p>Choose another webpage</p>
-		<form method="dialog">
-			<label>
-				<span>Choose your partner HTML page</span>
-				<input id="other-html" type="file" accept="text/html,.htm,.html">
-			</label>
-			<button id="crossbreed-make-baby">Make a baby!</button>
-		</form>
-	</dialog>
+	<main>
+		<article>
+			<h1>HTML Crossbreeder!</h1>
+			<p>You can crossbreed this website with any <code>.html</code> file!</p>
+			<p>It'll compare each <code>element</code> and try to choose a <code>tag</code> and combine all the
+				<code>attributes</code>.</p>
+			<p>Click <a href="#open-crossbreed">Crossbreed this webpage</a> below!</p>
+			<aside>
+				<p>Disclaimer: Children can be chaotic.</p>
+			</aside>
+		</article>
+	</main>
+
+	<footer>
+		<button id="open-crossbreed">Crossbreed this webpage</button>
+		<dialog id="crossbreed-dialog">
+			<p>Choose another webpage</p>
+			<form method="dialog">
+				<label>
+					<span>Choose your partner HTML page</span>
+					<input id="other-html" type="file" accept="text/html,.htm,.html">
+				</label>
+				<button id="crossbreed-make-baby">Make a baby!</button>
+			</form>
+		</dialog>
+	</footer>
 
 </body>
 
