@@ -5,7 +5,7 @@
 	<meta charset="utf-8" />
 	<title>HTML Crossbreeder</title>
 	<script id="crossbreed-script">
-		function crossbreed(out_element, lhs, rhs) {
+		function crossbreed(out_element, lhs, rhs, append) {
 			// const out_element = new Document().documentElement;
 			// const lhs = document.documentElement;
 			// const rhs = document.documentElement;
@@ -21,10 +21,15 @@
 					out_element.appendChild(larger_element.cloneNode(true));
 				} else {
 					smaller_overflow -= 1;
-					const smaller_element = smaller.children[Math.floor(i / larger.childElementCount * smaller.childElementCount)]
-					const new_node = chooseDominantNode(larger_element, smaller_element);
-					crossbreed(new_node, larger_element, smaller_element);
-					out_element.appendChild(new_node);
+					const smaller_element = smaller.children[Math.floor(i / larger.childElementCount * smaller.childElementCount)];
+					if (append) {
+						out_element.appendChild(larger_element.cloneNode(true));
+						out_element.appendChild(smaller_element.cloneNode(true));
+					} else {
+						const new_node = chooseDominantNode(larger_element, smaller_element);
+						crossbreed(new_node, larger_element, smaller_element);
+						out_element.appendChild(new_node);
+					}
 				}
 			}
 		}
@@ -98,7 +103,7 @@
 				const other_document = parser.parseFromString(await loadFile(other_file), "text/html");
 				parser = null;
 				const child_document = document.implementation.createHTMLDocument("Baby page");
-				crossbreed(child_document.head, document.head, other_document.head);
+				crossbreed(child_document.head, document.head, other_document.head, true);
 				crossbreed(child_document.body, document.body, other_document.body);
 				if (!child_document.getElementById("crossbreed-script")) {
 					child_document.head.appendChild(document.getElementById("crossbreed-script").cloneNode(true));
@@ -123,7 +128,15 @@
 			<h1>HTML Crossbreeder!</h1>
 			<p>You can crossbreed this website with any <code>.html</code> file!</p>
 			<p>It'll compare each <code>element</code> and try to choose a <code>tag</code> and combine all the
-				<code>attributes</code>.</p>
+				<code>attributes</code>.
+			</p>
+			<p>To load your website either use <strong>File / Save Page as</strong> or <kbd>CTRL</kbd> <kbd>S</kbd> on your website, or use an addon like:</p>
+			<ul>
+				<li><a href="https://addons.mozilla.org/en-US/firefox/addon/single-file/">SingleFile (Firefox)</a></li>
+				<li><a
+						href="https://chromewebstore.google.com/detail/singlefile/mpiodijhokgodhhofbcjdecpffjipkle?hl=en">SingleFile
+						(Chrome)</a></li>
+			</ul>
 			<p>Click <a href="#open-crossbreed">Crossbreed this webpage</a> below!</p>
 			<aside>
 				<p>Disclaimer: Children can be chaotic.</p>
